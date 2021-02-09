@@ -1,0 +1,24 @@
+
+/* autocomplete */
+.ui-autocomplete {
+	max-height: 250px;
+	overflow-y: auto;
+	overflow-x: hidden;
+	padding-right: 20px;
+}
+* html .ui-autocomplete {
+	height: 100px;
+}
+.ui-autocomplete .ui-corner-all {
+	font-weight: normal;			
+	-moz-border-radius: 0px;
+	-web-kit-border-radius: 0px;
+	border-radius: 0px;
+}
+
+/* dialog */
+.ui-dialog-titlebar {
+	background: none;
+	border: none;
+	color: #000000;
+}

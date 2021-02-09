@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+
+    <title>Официальный сайт Администрации города Южно-Сахалинска</title>
+    <link rel="shortcut icon" href="/favicon.ico">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="js/new/jquery.min.js"></script>
+    <script src="lib/bootstrap-3.3.7/js/bootstrap.min.js"></script>
+    <link href="lib/bootstrap-3.3.7/css/bootstrap.min.css" rel="stylesheet">
+    <link href="lib/bootstrap-3.3.7/css/bootstrap-theme.min.css" rel="stylesheet">
+
+
+    <link href="css/new/env.css?v=10" rel="stylesheet">
+    <script type="text/javascript">
+        var site_domain = "yuzhno-sakh.ru";
+        var global_hash = "";
+        var pv = "";
+    </script>
+</head>
+
+<body>
+
+
+    <div class="body">
+        <div class="container">
+
+
+
+            <link rel="stylesheet" href="css/ys_jquery.css" type="text/css">
+            <script type="text/javascript" src="js/currency_input.js"></script>
+
+            <div class="main-body">
+                <div class="row">
+                    <div class="col-sm-8">
+
+                        <div class="block-header">Калькулятор шагов аукциона</div>
+                        <div id="calc-form" class="advanced-form">
+                            <div class="row">
+                                <div class="col-sm-12"> Начальная цена: </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                    <input type="text" class="form-control currency" name="starting_price"
+                                        placeholder="0,00" autocomplete="off" min="0.00">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-3"> Размер шага (%): </div>
+                                <div class="col-sm-9"> Размер шага (руб.): </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <input type="number" class="form-control " name="step_percent" value="3.00"
+                                        placeholder="0,00" readonly>
+                                </div>
+                                <div class="col-sm-9">
+                                    <input type="number" class="form-control " name="step_value" value="0.00"
+                                        placeholder="0,00" readonly>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-3"> Номер шага: </div>
+                                <div class="col-sm-9"> Размер предложения (руб.): </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-3">
+                                    <input type="text" class="form-control" name="step" value="" placeholder="0"
+                                        min="0">
+                                </div>
+                                <div class="col-sm-9">
+                                    <input type="text" class="form-control currency" name="offer_value" value=""
+                                        placeholder="0,00" min="0.00">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-sm-12">
+                                </div>
+                            </div>
+                        </div>
+						
+                        <table id="calc-values" class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <td style="width: 200px;">Шаг</td>
+                                    <td>Предложение (руб.)</td>
+                                </tr>
+                            </thead>
+                            <tbody id="calc-values-body>
+                                <tr style="color: #989898">
+                                    <td>&nbsp;</td>
+                                    <td>&nbsp;</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-sm-4">
+                        <div class="block-header">Департамент по управлению муниципальным имуществом</div>
+                        <div class="column">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <style>
+                .primary-row {
+                    color: #000000;
+                    font-weight: bold;
+                    font-size: 1.1em;
+                }
+
+                .secondary-row {
+                    color: #989898;
+                }
+            </style>
+
+            <script>
+				var currentValues = {}; // объект для хранения текущего значения values
+				var currentStep = 0; 
+				//скопипасщено--------------------------------------
+					var elem = document.getElementById('calc-values'); 
+					if (elem.addEventListener) {
+						if ('onwheel' in document) {
+							// IE9+, FF17+
+							elem.addEventListener("wheel", onWheel);
+						} 
+						else if ('onmousewheel' in document) {
+							// устаревший вариант события
+							elem.addEventListener("mousewheel", onWheel);
+						} 
+						else {
+							// Firefox < 17
+							elem.addEventListener("MozMousePixelScroll", onWheel);
+						}
+					} 
+					else { // IE8-
+						elem.attachEvent("onmousewheel", onWheel);
+					}
+					// Это решение предусматривает поддержку IE8-
+					function onWheel(e) {
+						e = e || window.event;
+						// deltaY, detail содержат пиксели
+						// wheelDelta не дает возможность узнать количество пикселей
+						// onwheel || MozMousePixelScroll || onmousewheel
+						var delta = e.deltaY || e.detail || e.wheelDelta;								
+						e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+						if (delta>0){
+							calcChangeValuesStep(1);
+							window.currentStep++;
+							valuesHtml(calcValuesStep());
+						}
+						else{
+							calcChangeValuesStep(-1);
+							window.currentStep--;
+							valuesHtml(calcValuesStep());
+						}	
+					}
+				//------------------------------------------------
+                function prepareValues() {
+                    return {
+                        price: parseFloat(document.querySelector('[name=starting_price]').value.replace(',', '.')) || 0,
+                        stepPercent: parseFloat(document.querySelector('[name=step_percent]').value.replace(',', '.')) || 0,
+                        step: parseFloat(document.querySelector('[name=step]').value.replace(',', '.')) || 0,
+                        offerValue: parseFloat(document.querySelector('[name=offer_value]').value.replace(',', '.')) || 0
+                    }
+                }
+                function value(price, percent, step) {
+                    return price + (price * percent / 100) * step;
+                }
+                function toMoney(num, dec, thouSep, decSep) {
+                    var p = num.toFixed(dec).split(".");
+                    return p[0].split("").reverse().reduce(function (acc, num, i, orig) {
+                        return num == "-" ? acc : num + (i && !(i % 3) ? thouSep : "") + acc;
+                    }, "") + decSep + p[1];
+                }
+                function formatMoney(money) {
+                    if (money === null) return null;
+                    money = (money === undefined || isNaN(money) || !isFinite(money)) ? 0 : money;
+                    return toMoney(money, 2, ' ', ',');
+                }
+                function calcValuesStep() {
+                    var values = prepareValues();
+                    if (!values.step) {
+                        return undefined;
+                    }
+                    return [
+                        {
+                            step: (values.step - 1) ? values.step - 1 : 'Начальная цена',
+                            value: (values.step - 1) ? value(values.price, values.stepPercent, values.step - 1) : values.price,
+                        },
+                        {
+                            step: values.step,
+                            value: value(values.price, values.stepPercent, values.step)
+                        },
+                        {
+                            step: values.step + 1,
+                            value: value(values.price, values.stepPercent, values.step + 1)
+                        }
+                    ]
+                }
+				function calcChangeValuesStep(changeStep) {
+					var step=document.getElementsByName("step")[0];
+					step.value=parseFloat(step.value)+changeStep;
+					var table=document.getElementById("calc-values").getElementsByTagName('tbody')[0];					
+					table.innerHTML = valuesHtml(calcValuesStep());
+					
+					
+                    
+                }
+                function calcValuesOffer() { 
+                    
+						var values = prepareValues();
+						if (!values.offerValue) {
+							return undefined;
+						}
+						var step = Math.round((values.offerValue - values.price) / (values.stepPercent * values.price / 100));
+						if (!isFinite(step) || isNaN(step) || step <= 0) {
+							return undefined;
+						}
+						return [
+							{
+								step: (step - 1)  ? step - 1 + changeValue : null,
+								value: (step - 1 ) ? value(values.price, values.stepPercent, step - 1 ) : null
+							},
+							{
+								step: step + changeValue,
+								value: value(values.price, values.stepPercent, step )
+							},
+							{
+								step: step + 1 + changeValue,
+								value: value(values.price, values.stepPercent, step + 1 )
+							}
+						]
+						
+					}
+                function valuesHtml(values) {
+                    if (!values) {
+                        return '<tr><td>&nbsp;</td><td>&nbsp;</td></tr>';
+                    }
+                    var html = '', money;
+                    for (var i = 0; i < values.length; i++) {
+                        money = formatMoney(values[i].value);
+                        html += '<tr class="' + ((i === 1) ? 'primary-row' : 'secondary-row') + '">';
+                        html += '<td>' + (values[i].step !== null ? values[i].step : '&nbsp;') + '</td>';
+                        html += '<td>' + (values[i].value !== null ? money : '&nbsp;') + '</td>';
+                        html += '</tr>';
+                    }
+                    return html;
+                }
+				
+                $('#calc-form')
+                    .on('input', '[name=starting_price]', function (event) {
+                        var inputValues = prepareValues();
+                        $('[name=step_value]').val((inputValues.price * inputValues.stepPercent / 100).toFixed(2));
+                        if (inputValues.step) {
+                            $('[name=step]').trigger('input');
+                        } else if (inputValues.offerValue) {
+                            $('[name=offer_value]').trigger('input');
+                        }
+                    })
+                    .on('change', '[name=step]', function (event) {
+                        $(this).val(parseFloat(this.value) || '');
+                    })
+                    .on('input', '[name=step]', function (event) {
+                        $('[name=offer_value]').val('');
+                        $('#calc-values tbody').empty().append(
+                            valuesHtml(calcValuesStep())
+                        );
+                    })
+                    .on('input', '[name=offer_value]', function (event) {
+                        $('[name=step]').val('');
+                        $('#calc-values tbody').empty().append(
+                            valuesHtml(calcValuesOffer())
+                        );
+                    });
+                $(document).ready(function () {
+                    $('.currency').currencyInput();
+                });
+				
+            </script>
+
+
+            <div class="main-separator"></div>
+
+        </div>
+
+    </div>
+</body>
+
+</html>
