@@ -144,6 +144,7 @@
 					// Это решение предусматривает поддержку IE8-
 					elem.addEventListener('touchstart', function (e){
 						posY = e;
+						e.preventDefault();
 					});
 					elem.addEventListener('touchmove', function (e){
 						if (posY) {
@@ -151,46 +152,27 @@
 								calcChangeValuesStep(-1);
 								window.currentStep++;
 								valuesHtml(calcValuesStep());
+								e.preventDefault();
 								
 							}
 							else if((e.touches[0].pageY - posY.touches[0].pageY)<0){
 								calcChangeValuesStep(1);
 								window.currentStep--;
 								valuesHtml(calcValuesStep());
+								e.preventDefault();
 									
 							}
 						}
 					});	
 					elem.addEventListener('touched', function (e){
 						posY = null;
+						e.preventDefault();
 					});					;					
 					
 					
 
 					function onWheel(e) {
-						//if(e.targetTouches){
-						//	posY = e.targetTouches[0].clientY;
-							
-						//	if(currentPosY>posY){
-						//		calcChangeValuesStep(1);
-						//		window.currentStep++;
-						//		valuesHtml(calcValuesStep());
-						//		currentPosY=posY;
-						//		console.log(posY)
-						//	}
-						//	else if (currentPosY<posY){
-						//		calcChangeValuesStep(-1);
-						//		window.currentStep--;
-						//		valuesHtml(calcValuesStep());
-						//		currentPosY=posY;
-						//		console.log("2 "+posY)
-						//	}
-						//	else if (currentPosY=posY){
-						//	console.log("2")
-						//	}
-						//	e.preventDefault();
-						//}
-						//else{
+						
 							e = e || window.event;
 							// deltaY, detail содержат пиксели
 							// wheelDelta не дает возможность узнать количество пикселей
@@ -209,7 +191,7 @@
 								valuesHtml(calcValuesStep());
 							}	
 						}
-					//}
+				
 				//------------------------------------------------
                 function prepareValues() {
                     return {
