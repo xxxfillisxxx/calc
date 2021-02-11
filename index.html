@@ -119,6 +119,9 @@
             <script>
 				var currentValues = {}; // объект для хранения текущего значения values
 				var currentStep = 0; 
+				var posY, currentPosY;
+				
+
 				//скопипасщено--------------------------------------
 					var elem = document.getElementById('calc-values'); 
 					if (elem.addEventListener) {
@@ -139,23 +142,52 @@
 						elem.attachEvent("onmousewheel", onWheel);
 					}
 					// Это решение предусматривает поддержку IE8-
+					elem.addEventListener('touchmove', onWheel, false);					
+					elem.addEventListener('mousemove', onWheel, false );
+					//elem.addEventListener('touchstart', onWheel, false);
+
 					function onWheel(e) {
-						e = e || window.event;
-						// deltaY, detail содержат пиксели
-						// wheelDelta не дает возможность узнать количество пикселей
-						// onwheel || MozMousePixelScroll || onmousewheel
-						var delta = e.deltaY || e.detail || e.wheelDelta;								
-						e.preventDefault ? e.preventDefault() : (e.returnValue = false);
-						if (delta>0){
-							calcChangeValuesStep(1);
-							window.currentStep++;
-							valuesHtml(calcValuesStep());
+						if(e.targetTouches){
+							posY = e.targetTouches[0].clientY;
+							
+							if(currentPosY>posY){
+								calcChangeValuesStep(1);
+								window.currentStep++;
+								valuesHtml(calcValuesStep());
+								currentPosY=posY;
+								console.log(posY)
+							}
+							else if (currentPosY<posY){
+								calcChangeValuesStep(-1);
+								window.currentStep--;
+								valuesHtml(calcValuesStep());
+								currentPosY=posY;
+								console.log("2 "+posY)
+							}
+							else if (currentPosY=posY){
+							console.log("2")
+							}
+							e.preventDefault();
 						}
 						else{
-							calcChangeValuesStep(-1);
-							window.currentStep--;
-							valuesHtml(calcValuesStep());
-						}	
+							e = e || window.event;
+							// deltaY, detail содержат пиксели
+							// wheelDelta не дает возможность узнать количество пикселей
+							// onwheel || MozMousePixelScroll || onmousewheel						
+							var delta = e.deltaY || e.detail || e.wheelDelta;								
+							e.preventDefault ? e.preventDefault() : (e.returnValue = false);
+						
+							if (delta>0){
+								calcChangeValuesStep(1);
+								window.currentStep++;
+								valuesHtml(calcValuesStep());
+							}
+							else{
+								calcChangeValuesStep(-1);
+								window.currentStep--;
+								valuesHtml(calcValuesStep());
+							}	
+						}
 					}
 				//------------------------------------------------
                 function prepareValues() {
