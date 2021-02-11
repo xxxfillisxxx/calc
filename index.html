@@ -116,11 +116,8 @@
                 }
             </style>
 
-            <script>
-				var currentValues = {}; // объект для хранения текущего значения values
-				var currentStep = 0; 
-				var posY, currentPosY;
-				
+            <script>				
+				var posY;			
 
 				//скопипасщено--------------------------------------
 					var elem = document.getElementById('calc-values'); 
@@ -148,21 +145,24 @@
 					});
 					elem.addEventListener('touchmove', function (e){
 						if (posY) {
-							if((e.touches[0].pageY - posY.touches[0].pageY)>0){
+							if((e.changedTouches[0].pageY - posY.touches[0].pageY)>0){
 								calcChangeValuesStep(-1);
-								window.currentStep++;
-								valuesHtml(calcValuesStep());
-								e.preventDefault();
-								
-							}
-							else if((e.touches[0].pageY - posY.touches[0].pageY)<0){
-								calcChangeValuesStep(1);
 								window.currentStep--;
 								valuesHtml(calcValuesStep());
-								e.preventDefault();
+								posY=e;
+								
+								
+							}
+							else if((e.changedTouches[0].pageY - posY.touches[0].pageY)<0){
+								calcChangeValuesStep(1);
+								window.currentStep++;
+								valuesHtml(calcValuesStep());
+								posY=e;
+								
 									
 							}
 						}
+					e.preventDefault();
 					});	
 					elem.addEventListener('touched', function (e){
 						posY = null;
@@ -190,9 +190,8 @@
 								window.currentStep--;
 								valuesHtml(calcValuesStep());
 							}	
-						}
+						}			
 				
-				//------------------------------------------------
                 function prepareValues() {
                     return {
                         price: parseFloat(document.querySelector('[name=starting_price]').value.replace(',', '.')) || 0,
@@ -256,15 +255,15 @@
 						}
 						return [
 							{
-								step: (step - 1)  ? step - 1 + changeValue : null,
+								step: (step - 1)  ? step - 1: null,
 								value: (step - 1 ) ? value(values.price, values.stepPercent, step - 1 ) : null
 							},
 							{
-								step: step + changeValue,
+								step: step,
 								value: value(values.price, values.stepPercent, step )
 							},
 							{
-								step: step + 1 + changeValue,
+								step: step + 1,
 								value: value(values.price, values.stepPercent, step + 1 )
 							}
 						]
