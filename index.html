@@ -44,7 +44,7 @@
                             <div class="row">
                                 <div class="col-sm-12">
                                     <input type="text" class="form-control currency" name="starting_price"
-                                        placeholder="0,00" autocomplete="off" min="0.00">
+                                        placeholder="0,00" autocomplete="off" min="0.00" value="6000">
                                 </div>
                             </div>
                             <div class="row">
@@ -67,8 +67,8 @@
                             </div>
                             <div class="row">
                                 <div class="col-sm-3">
-                                    <input type="text" class="form-control" name="step" value="" placeholder="0"
-                                        min="0">
+                                    <input type="text" class="form-control" name="step" value="20" placeholder="0"
+                                        min="0" value="70">
                                 </div>
                                 <div class="col-sm-9">
                                     <input type="text" class="form-control currency" name="offer_value" value=""
@@ -117,10 +117,8 @@
             </style>
 
             <script>				
-				var posY;			
-
-				//скопипасщено--------------------------------------
-					var elem = document.getElementById('calc-values'); 
+				var posY, currentStep;		
+				var elem = document.getElementById('calc-values'); 
 					if (elem.addEventListener) {
 						if ('onwheel' in document) {
 							// IE9+, FF17+
@@ -140,34 +138,42 @@
 					}
 					// Это решение предусматривает поддержку IE8-
 					elem.addEventListener('touchstart', function (e){
-						posY = e;
+						posY = parseInt(e.changedTouches[0].clientY);
 						e.preventDefault();
-					});
+					}, false);
 					elem.addEventListener('touchmove', function (e){
+						var touchobj = e.changedTouches[e.changedTouches.length-1];// первая точка прикосновения для данного события
+						var dist = parseInt((touchobj.clientY) - posY);
+						console.log(dist);
 						if (posY) {
-							if((e.changedTouches[0].pageY - posY.touches[0].pageY)>0){
+						
+							if((e.changedTouches[0].pageY - posY)>0){
+							
 								calcChangeValuesStep(-1);
-								window.currentStep--;
+								currentStep--;
 								valuesHtml(calcValuesStep());
-								posY=e;
+								
 								
 								
 							}
-							else if((e.changedTouches[0].pageY - posY.touches[0].pageY)<0){
+							else if((e.changedTouches[0].pageY - posY)<0){
+								
 								calcChangeValuesStep(1);
-								window.currentStep++;
+								currentStep++;
 								valuesHtml(calcValuesStep());
-								posY=e;
+								
 								
 									
 							}
 						}
+						
 					e.preventDefault();
-					});	
-					elem.addEventListener('touched', function (e){
+					}, false);	
+					elem.addEventListener('touchend', function (e){
+						console.log(e.changedTouches[0].pageY);
 						posY = null;
 						e.preventDefault();
-					});					;					
+					}, false);					;					
 					
 					
 
@@ -182,12 +188,12 @@
 						
 							if (delta>0){
 								calcChangeValuesStep(1);
-								window.currentStep++;
+								currentStep++;
 								valuesHtml(calcValuesStep());
 							}
 							else{
 								calcChangeValuesStep(-1);
-								window.currentStep--;
+								currentStep--;
 								valuesHtml(calcValuesStep());
 							}	
 						}			
@@ -196,7 +202,7 @@
                     return {
                         price: parseFloat(document.querySelector('[name=starting_price]').value.replace(',', '.')) || 0,
                         stepPercent: parseFloat(document.querySelector('[name=step_percent]').value.replace(',', '.')) || 0,
-                        step: parseFloat(document.querySelector('[name=step]').value.replace(',', '.')) || 0,
+                        step: currentStep || 0,
                         offerValue: parseFloat(document.querySelector('[name=offer_value]').value.replace(',', '.')) || 0
                     }
                 }
@@ -235,7 +241,7 @@
                     ]
                 }
 				function calcChangeValuesStep(changeStep) {
-					var step=document.getElementsByName("step")[0];
+					var step=currentStep;// document.getElementsByName("step")[0];
 					step.value=parseFloat(step.value)+changeStep;
 					var table=document.getElementById("calc-values").getElementsByTagName('tbody')[0];					
 					table.innerHTML = valuesHtml(calcValuesStep());
@@ -295,10 +301,14 @@
                         }
                     })
                     .on('change', '[name=step]', function (event) {
-                        $(this).val(parseFloat(this.value) || '');
+						currentStep=parseFloat(this.value);//-----------------
+						
+                        $(this).trigger(parseFloat(this.value) || '');
                     })
                     .on('input', '[name=step]', function (event) {
                         $('[name=offer_value]').val('');
+						currentStep=parseFloat(this.value); //-----------------
+						
                         $('#calc-values tbody').empty().append(
                             valuesHtml(calcValuesStep())
                         );
