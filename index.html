@@ -80,15 +80,16 @@
                                 </div>
                             </div>
                         </div>
-						
+						<button id="changeButton" hidden="true" onclick="changeInputStep()">Изменить введенное значение</button>
                         <table id="calc-values" class="table table-striped">
                             <thead>
                                 <tr>
                                     <td style="width: 200px;">Шаг</td>
                                     <td>Предложение (руб.)</td>
+									<td>Количество шагов до текущего</td>
                                 </tr>
                             </thead>
-                            <tbody id="calc-values-body>
+                            <tbody id="calc-values-body">
                                 <tr style="color: #989898">
                                     <td>&nbsp;</td>
                                     <td>&nbsp;</td>
@@ -117,8 +118,8 @@
             </style>
 
             <script>				
-				var posY, currentStep;		
-				var elem = document.getElementById('calc-values'); 
+				var posY, currentStep, currentOffer;		
+				var elem = document.getElementById('calc-values'); //прослушивание событий прокрутки таблицы колесиком мыши
 					if (elem.addEventListener) {
 						if ('onwheel' in document) {
 							// IE9+, FF17+
@@ -136,74 +137,66 @@
 					else { // IE8-
 						elem.attachEvent("onmousewheel", onWheel);
 					}
-					// Это решение предусматривает поддержку IE8-
-					elem.addEventListener('touchstart', function (e){
-						posY = parseInt(e.changedTouches[0].clientY);
+					//--------------------------------------
+					//Прослушивание косания на сенсорных экранах
+					elem.addEventListener('touchstart', function (e){ 
+						posY = parseInt(e.changedTouches[0].clientY);//сохраняем точку касания
 						e.preventDefault();
 					}, false);
 					elem.addEventListener('touchmove', function (e){
-						var touchobj = e.changedTouches[e.changedTouches.length-1];// первая точка прикосновения для данного события
-						var dist = parseInt((touchobj.clientY) - posY);
-						console.log(dist);
-						if (posY) {
-						
-							if((e.changedTouches[0].pageY - posY)>0){
-							
-								calcChangeValuesStep(-1);
-								currentStep--;
-								valuesHtml(calcValuesStep());
-								
-								
-								
+						var touchY = e.changedTouches[e.changedTouches.length-1]; 
+						var changePosY = parseInt((touchY.clientY) - posY);		//расчитывается движение точки касания по Y				
+						if (posY) {						
+							if(changePosY>0){	//если движение вверх то меняем шаги в таблице						
+								calcChangeValuesStep(-1);								
+								valuesHtml(calcValuesStep());								
 							}
-							else if((e.changedTouches[0].pageY - posY)<0){
-								
-								calcChangeValuesStep(1);
-								currentStep++;
-								valuesHtml(calcValuesStep());
-								
-								
-									
+							else if(changePosY<0){		//если движение вниз то меняем шаги в таблице							
+								calcChangeValuesStep(1);								
+								valuesHtml(calcValuesStep());									
 							}
 						}
-						
+						posY = touchY.clientY;
 					e.preventDefault();
 					}, false);	
-					elem.addEventListener('touchend', function (e){
-						console.log(e.changedTouches[0].pageY);
+					elem.addEventListener('touchend', function (e){ //при окончании события касания сбрасывается posY						
 						posY = null;
 						e.preventDefault();
 					}, false);					;					
-					
-					
-
-					function onWheel(e) {
-						
+					//-------------------------------
+					//функция изменения таблицы при использовании колесика мыши
+					//суть таже что и при событии touchmove. Если колесико крутить в одну сторону то шаги увеличиваются, если в другую-уменьшаются
+					function onWheel(e) {						
 							e = e || window.event;
 							// deltaY, detail содержат пиксели
 							// wheelDelta не дает возможность узнать количество пикселей
 							// onwheel || MozMousePixelScroll || onmousewheel						
 							var delta = e.deltaY || e.detail || e.wheelDelta;								
-							e.preventDefault ? e.preventDefault() : (e.returnValue = false);
-						
+							e.preventDefault ? e.preventDefault() : (e.returnValue = false);						
 							if (delta>0){
-								calcChangeValuesStep(1);
-								currentStep++;
+								calcChangeValuesStep(1);								
 								valuesHtml(calcValuesStep());
 							}
 							else{
-								calcChangeValuesStep(-1);
-								currentStep--;
+								calcChangeValuesStep(-1);								
 								valuesHtml(calcValuesStep());
 							}	
-						}			
-				
+						}	
+
+				//функция изменения шага по кнопке. При нажатии на кнопку значение input устанавливается в текущее значение из таблицы
+				function changeInputStep() {
+					document.querySelector('[name=step]').value=currentStep;
+					var table=document.getElementById("calc-values").getElementsByTagName('tbody')[0];
+					table.innerHTML = valuesHtml(calcValuesStep());
+					document.getElementById("changeButton").hidden = true
+				}
                 function prepareValues() {
                     return {
                         price: parseFloat(document.querySelector('[name=starting_price]').value.replace(',', '.')) || 0,
                         stepPercent: parseFloat(document.querySelector('[name=step_percent]').value.replace(',', '.')) || 0,
                         step: currentStep || 0,
-                        offerValue: parseFloat(document.querySelector('[name=offer_value]').value.replace(',', '.')) || 0
+                        offerValue: parseFloat(document.querySelector('[name=offer_value]').value.replace(',', '.')) || 0,
+						
                     }
                 }
                 function value(price, percent, step) {
@@ -221,7 +214,8 @@
                     return toMoney(money, 2, ' ', ',');
                 }
                 function calcValuesStep() {
-                    var values = prepareValues();
+                    var values = prepareValues()
+					
                     if (!values.step) {
                         return undefined;
                     }
@@ -229,23 +223,35 @@
                         {
                             step: (values.step - 1) ? values.step - 1 : 'Начальная цена',
                             value: (values.step - 1) ? value(values.price, values.stepPercent, values.step - 1) : values.price,
+							differenceStep: values.step - Number(document.querySelector('[name=step]').value) - 1
                         },
                         {
                             step: values.step,
-                            value: value(values.price, values.stepPercent, values.step)
+                            value: value(values.price, values.stepPercent, values.step, values.step + parseFloat(document.querySelector('[name=step]'))),
+							differenceStep: values.step - Number(document.querySelector('[name=step]').value)
                         },
                         {
                             step: values.step + 1,
-                            value: value(values.price, values.stepPercent, values.step + 1)
+                            value: value(values.price, values.stepPercent, values.step + 1, values.step - parseFloat(document.querySelector('[name=step]'))),
+							differenceStep: values.step - Number(document.querySelector('[name=step]').value) +1
                         }
                     ]
                 }
+				//Функция изменения значений таблицы
 				function calcChangeValuesStep(changeStep) {
-					var step=currentStep;// document.getElementsByName("step")[0];
-					step.value=parseFloat(step.value)+changeStep;
-					var table=document.getElementById("calc-values").getElementsByTagName('tbody')[0];					
-					table.innerHTML = valuesHtml(calcValuesStep());
-					
+					var step=currentStep;
+					var table=document.getElementById("calc-values").getElementsByTagName('tbody')[0];		
+					step.value=parseFloat(step.value)+changeStep;					
+					if(currentStep+changeStep>0){
+						currentStep=currentStep+changeStep;									
+						table.innerHTML = valuesHtml(calcValuesStep());	
+						(currentStep==Number(document.querySelector('[name=step]').value))? document.getElementById("changeButton").hidden = true: document.getElementById("changeButton").hidden = false
+						
+					}
+					else{
+						step=0;
+						currentStep=1;
+					}
 					
                     
                 }
@@ -285,6 +291,7 @@
                         html += '<tr class="' + ((i === 1) ? 'primary-row' : 'secondary-row') + '">';
                         html += '<td>' + (values[i].step !== null ? values[i].step : '&nbsp;') + '</td>';
                         html += '<td>' + (values[i].value !== null ? money : '&nbsp;') + '</td>';
+						html += '<td>' + (values[i].differenceStep !== null ? values[i].differenceStep : '&nbsp;') + '</td>';
                         html += '</tr>';
                     }
                     return html;
@@ -314,6 +321,7 @@
                         );
                     })
                     .on('input', '[name=offer_value]', function (event) {
+						currentOffer=parseFloat(this.value);
                         $('[name=step]').val('');
                         $('#calc-values tbody').empty().append(
                             valuesHtml(calcValuesOffer())
